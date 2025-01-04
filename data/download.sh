@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 设置脚本在遇到错误时立即退出
+# 设置错误处理
 set -e
 
 # 定义数据目录
@@ -9,39 +9,33 @@ GLUE_DIR="$DATA_DIR/glue"
 SQUAD_DIR="$DATA_DIR/squad"
 
 # 创建必要的目录
-mkdir -p "$GLUE_DIR"
-mkdir -p "$SQUAD_DIR"
+mkdir -p $GLUE_DIR
+mkdir -p $SQUAD_DIR
 
-# 下载所有 GLUE 子任务使用 Huggingface datasets 库
+# 定义要下载的GLUE任务列表
+GLUE_TASKS=("cola" "mnli" "qqp" "sst2" "qnli" "rte" "mrpc" "stsb")
+
+# 下载 GLUE 数据集
 echo "Downloading all GLUE datasets using Huggingface datasets..."
-GLUE_TASKS=("cola" "sst2" "mrpc" "sts-b" "qqp" "mnli" "qnli" "rte" "wnli")
-
 for TASK in "${GLUE_TASKS[@]}"; do
     echo "Downloading GLUE task: $TASK"
-    python -c "
-import os
-from datasets import load_dataset
-
-dataset = load_dataset('glue', '$TASK')
-save_path = os.path.join('$GLUE_DIR', '$TASK')
-dataset.save_to_disk(save_path)
-"
-    echo "GLUE task '$TASK' downloaded and saved to $GLUE_DIR/$TASK"
+    python3 -c "from datasets import load_dataset; load_dataset('glue', '$TASK', cache_dir='$GLUE_DIR')"
+    echo "GLUE task $TASK downloaded successfully."
 done
 
+echo "All GLUE datasets have been downloaded and saved to $GLUE_DIR."
+
 # 下载 SQuAD 数据集
-echo "Downloading SQuAD v1.1 dataset..."
-# 确保 SQuAD 目录存在
-mkdir -p "$SQUAD_DIR"
+echo "Downloading SQuAD dataset..."
+mkdir -p $SQUAD_DIR
 
 # 下载训练集
-echo "Downloading SQuAD v1.1 training set..."
-wget -O "$SQUAD_DIR/train-v1.1.json" https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json
+wget -O $SQUAD_DIR/train-v1.1.json https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json
 
 # 下载开发集
-echo "Downloading SQuAD v1.1 development set..."
-wget -O "$SQUAD_DIR/dev-v1.1.json" https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json
+wget -O $SQUAD_DIR/dev-v1.1.json https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json
 
-echo "SQuAD v1.1 dataset downloaded and saved to $SQUAD_DIR"
+echo "SQuAD dataset downloaded and saved to $SQUAD_DIR."
 
-echo "All datasets downloaded successfully."
+# 提示完成
+echo "All datasets have been successfully downloaded and preprocessed."
